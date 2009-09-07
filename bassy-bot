@@ -1,0 +1,315 @@
+﻿#!/usr/bin/perl
+
+use strict;
+use warnings;
+use utf8;
+
+$BassyBot::VERSION = '0.1';
+
+my $username = 'bassytime';
+my $spool_interval = 180;
+
+############################################################
+package Net::Twitter::Bot;
+
+use Net::Twitter;
+
+sub new {
+  my $class = shift;
+  my %config = @_;
+  return bless {
+    _CONFIG => \%config,
+    _TIMER => PullTimer->new(),
+  }, $class;
+}
+
+sub config {
+  my $self = shift;
+  return $self->{_CONFIG};
+}
+
+sub timer {
+  my $self = shift;
+  return $self->{_TIMER};
+}
+
+sub twitter {
+  my $self = shift;
+  return $self->{_TWITTER} ||= Net::Twitter->new(
+    traits   => [qw/API::REST/],
+    username => $self->{_CONFIG}->{username},
+    password => $self->{_CONFIG}->{password},
+    clientname => $self->{_CONFIG}->{clientname},
+    clientver => $self->{_CONFIG}->{clientver});
+}
+
+sub sleep {
+  my $self = shift;
+  sleep $self->{_CONFIG}->{spool_interval};
+}
+
+sub last_status {
+  my $self = shift;
+  my $last_status = shift;
+  if ($last_status) {
+    $self->{_LAST_STATUS} = $last_status;
+    print "LAST_STATUS_ID updated: $self->{_LAST_STATUS}{id}\n";
+  }
+  return $self->{_LAST_STATUS};
+}
+
+sub timeline {
+  my $self = shift;
+  my $opt = shift;
+  my $statuses;
+  eval {
+    $statuses = $self->twitter->home_timeline($opt);
+  };
+  if ( my $err = $@ ) {
+    die $@ unless blessed $err && $err->isa('Net::Twitter::Error');
+    warn "HTTP Response Code: ", $err->code, "\n",
+         "HTTP Message......: ", $err->message, "\n",
+         "Twitter error.....: ", $err->error, "\n";
+  }
+  return $statuses;
+}
+
+sub fetch {
+  my $self = shift;
+  my %opt;
+  if ($self->last_status()) {
+    $opt{since_id} = $self->last_status()->{id};
+  } else {
+    $opt{count} = 1;
+  }
+  my $statuses = $self->timeline(\%opt);
+  $self->last_status($statuses->[0]) if @$statuses;
+  return $statuses;
+}
+
+sub start {
+  my $self = shift;
+  $self->fetch();
+  for (;;) {
+    my $timer_action = $self->timer->pull();
+    $timer_action->($self) if ($timer_action);
+    for my $status ( reverse @{$self->fetch()} ) {
+      $self->reaction($status);
+    }
+    $self->sleep;
+  }
+}
+
+sub reaction {
+  my $self = shift;
+  my $status = shift;
+  for my $action (@{$self->actions()}) {
+    last if $action->($self, $status);
+  }
+}
+
+# each action methods will called with status object
+# the action method should return true if you want to block other action methods
+sub actions {
+  die "plz override actions method! it should return action array-ref\n";
+}
+
+############################################################
+package BassyBot;
+
+use base qw( Net::Twitter::Bot );
+
+use Time::ParseDate;
+
+my @ACTIONS = (
+  # ignore myself
+  sub {
+    my $self = shift;
+    my $status = shift;
+    return $status->{user}{screen_name} eq $self->{_CONFIG}->{username};
+  },
+  # print out message
+  sub {
+    my $self = shift;
+    my $status = shift;
+    print "Searching reaction for ", &format_tweet($status), "\n";
+    return ();
+  },
+  # RT
+  sub {
+    my $self = shift;
+    my $status = shift;
+    if ($status->{text} =~ /RT \@bassytime\:/) {
+      my $message = "いってねーよバーカ！ RT \@$status->{user}{screen_name}: $status->{text}";
+      print "> $message in_reply_to_status_id => $status->{id}\n";
+      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      return 1;
+    }
+    return ();
+  },
+  # 俺のVM
+  sub {
+    my $self = shift;
+    my $status = shift;
+    if ($status->{text} =~ /揺れた|ゆれた|地震|yrt/) {
+      my $message = "俺のVM RT \@$status->{user}{screen_name}: $status->{text}";
+      print "> $message in_reply_to_status_id => $status->{id}\n";
+      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      return 1;
+    }
+    return ();
+  },
+  # Reply
+  sub {
+    my $self = shift;
+    my $status = shift;
+    if ($status->{text} =~ /\@bassytime/) {
+      my $message = "\@$status->{user}{screen_name} ホントしょうもねぇーな！";
+      print "> $message in_reply_to_status_id => $status->{id}\n";
+      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      return 1;
+    }
+    return ();
+  },
+  # この厨二がっ！
+  sub {
+    my $self = shift;
+    my $status = shift;
+    if ($status->{text} =~ /unko|utm|ちん|チン/) {
+      my $message = "\@$status->{user}{screen_name} この厨二がっ！";
+      print "> $message in_reply_to_status_id => $status->{id}\n";
+      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      return 1;
+    }
+    return ();
+  },
+  # @riue(18943492)
+  sub {
+    my $self = shift;
+    my $status = shift;
+    if ($status->{user}{id} eq '18943492') {
+      my $message = "\@$status->{user}{screen_name} しょうもねぇーな！";
+      print "> $message in_reply_to_status_id => $status->{id}\n";
+      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      return 1;
+    }
+    return ();
+  },
+);
+
+sub actions {
+  return \@ACTIONS;
+}
+
+sub format_tweet {
+  my $status = shift;
+  my $time = parsedate($status->{created_at});
+  my $ago = time - $time;
+  if ($ago < 60) {
+    $ago = $ago . 's';
+  } elsif ($ago < 60 * 60) {
+    $ago = int($ago/60) . 'm';
+  } else {
+    $ago = int($ago/60/60) . 'h';
+  }
+  return "$ago ago: $status->{id} <$status->{user}{screen_name}/$status->{user}{id}> $status->{text}";
+}
+
+sub new {
+  my $class = shift;
+  my $self = $class->SUPER::new(@_);
+  $self->{_CONFIG}{clientname} = 'bassy-bot';
+  $self->{_CONFIG}{clientver} = $BassyBot::VERSION;
+#  for my $status (reverse @{$self->timeline({count => 100})}) {
+#    print &format_tweet($status), "\n";
+#  }
+  $self->timer->add_target("12:00",
+	  sub {
+	    my $self = shift;
+        my $message = "今日もバッシータイム開始！冷やしパーコ！";
+        print "> $message at 12:00\n";
+        $self->twitter->update({status => $message});
+	  });
+  $self->timer->add_target("15:00",
+	  sub {
+	    my $self = shift;
+        my $message = "しょうもねぇーな！";
+        print "> $message at 15:00\n";
+        $self->twitter->update({status => $message});
+	  });
+  $self->timer->add_target("18:00",
+	  sub {
+	    my $self = shift;
+        my $message = "一人で焼肉食いにいってくる。18000円だけどな！";
+        print "> $message at 18:00\n";
+        $self->twitter->update({status => $message});
+	  });
+  
+  return $self;
+}
+
+############################################################
+package PullTimer;
+
+sub new {
+  my $class = shift;
+  my @local_epoch = localtime(0);
+  my $self = bless {
+    _LOCAL_DIFF => $local_epoch[0] + $local_epoch[1]*60 + $local_epoch[2]*60*60,
+    _TARGETS => {}
+  }, $class;
+  $self->{_LAST_TIME} = $self->time();
+  return $self;
+}
+
+sub time {
+  my $self = shift;
+  return (time() - $self->{_LOCAL_DIFF}) % (24*60*60);
+}
+
+sub add_target {
+  my $self = shift;
+  my $time = shift;
+  my $content = shift;
+  my ($h, $m) = split(/\:/, $time);
+  $self->{_TARGETS}{$h*60*60 + $m*60} = $content;
+#  print "timer updated: ", %{$self->{_TARGETS}}, "\n";
+}
+
+sub pull {
+  my $self = shift;
+  my $time = $self->time();
+  my $last_time = $self->{_LAST_TIME};
+#  print "search timer between $last_time and $time\n";
+  my @current_times = grep {
+      ($_ > $last_time and $_ <= $time)
+      or ($time < $last_time and $_ > $last_time)
+    } keys %{$self->{_TARGETS}};
+#  print "result :", join(",", @current_times), "\n";
+  $self->{_LAST_TIME} = $time;
+  return $self->{_TARGETS}{$current_times[0]} if (@current_times);
+  return ();
+}
+
+
+############################################################
+package main;
+
+use Getopt::Long;
+
+my $sjis = 0;
+my $password = '';
+
+GetOptions(
+	'sjis' => \$sjis,
+	'pass=s' => \$password,
+);
+
+die "--p='YourPassword' plz.\n" unless $password;
+
+binmode STDOUT, ':encoding(shiftjis)' if $sjis; 
+
+BassyBot->new(username => $username, password => $password, spool_interval => $spool_interval)->start;
+
+
+
