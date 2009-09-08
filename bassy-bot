@@ -300,17 +300,19 @@ use Getopt::Long;
 
 my $sjis = 0;
 my $password = '';
+my $nossl = 0;
 
 GetOptions(
 	'sjis' => \$sjis,
 	'pass=s' => \$password,
+	'nossl' => \$nossl,
 );
 
 die "--pass='YourPassword' plz.\n" unless $password;
 
 binmode STDOUT, ':encoding(shiftjis)' if $sjis; 
 
-BassyBot->new(username => $username, password => $password, spool_interval => $spool_interval)->start;
+BassyBot->new(username => $username, password => $password, spool_interval => $spool_interval, ssl => ! $nossl)->start;
 
 
 
