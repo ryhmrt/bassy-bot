@@ -37,15 +37,15 @@ sub twitter {
   my $self = shift;
   return $self->{_TWITTER} ||= Net::Twitter->new(
     traits   => [qw/API::REST/],
-    username => $self->{_CONFIG}->{username},
-    password => $self->{_CONFIG}->{password},
-    clientname => $self->{_CONFIG}->{clientname},
-    clientver => $self->{_CONFIG}->{clientver});
+    username => $self->{_CONFIG}{username},
+    password => $self->{_CONFIG}{password},
+    clientname => $self->{_CONFIG}{clientname},
+    clientver => $self->{_CONFIG}{clientver});
 }
 
 sub sleep {
   my $self = shift;
-  sleep $self->{_CONFIG}->{spool_interval};
+  sleep $self->{_CONFIG}{spool_interval};
 }
 
 sub last_status {
@@ -126,7 +126,7 @@ my @ACTIONS = (
   sub {
     my $self = shift;
     my $status = shift;
-    return $status->{user}{screen_name} eq $self->{_CONFIG}->{username};
+    return $status->{user}{screen_name} eq $self->{_CONFIG}{username};
   },
   # print out message
   sub {
@@ -140,9 +140,7 @@ my @ACTIONS = (
     my $self = shift;
     my $status = shift;
     if ($status->{text} =~ /RT \@bassytime\:/) {
-      my $message = "いってねーよバーカ！ RT \@$status->{user}{screen_name}: $status->{text}";
-      print "> $message in_reply_to_status_id => $status->{id}\n";
-      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      $self->tweet("いってねーよバーカ！ RT \@$status->{user}{screen_name}: $status->{text}", $status->{id});
       return 1;
     }
     return ();
@@ -152,9 +150,7 @@ my @ACTIONS = (
     my $self = shift;
     my $status = shift;
     if ($status->{text} =~ /揺れた|ゆれた|地震|yrt/) {
-      my $message = "俺のVM RT \@$status->{user}{screen_name}: $status->{text}";
-      print "> $message in_reply_to_status_id => $status->{id}\n";
-      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      $self->tweet("俺のVM RT \@$status->{user}{screen_name}: $status->{text}", $status->{id});
       return 1;
     }
     return ();
@@ -164,9 +160,7 @@ my @ACTIONS = (
     my $self = shift;
     my $status = shift;
     if ($status->{text} =~ /\@bassytime/) {
-      my $message = "\@$status->{user}{screen_name} ホントしょうもねぇーな！";
-      print "> $message in_reply_to_status_id => $status->{id}\n";
-      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      $self->tweet("\@$status->{user}{screen_name} ホントしょうもねぇーな！", $status->{id});
       return 1;
     }
     return ();
@@ -176,9 +170,7 @@ my @ACTIONS = (
     my $self = shift;
     my $status = shift;
     if ($status->{text} =~ /unko|utm|ちん|チン/) {
-      my $message = "\@$status->{user}{screen_name} この厨二がっ！";
-      print "> $message in_reply_to_status_id => $status->{id}\n";
-      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      $self->tweet("\@$status->{user}{screen_name} この厨二がっ！", $status->{id});
       return 1;
     }
     return ();
@@ -188,14 +180,24 @@ my @ACTIONS = (
     my $self = shift;
     my $status = shift;
     if ($status->{user}{id} eq '18943492') {
-      my $message = "\@$status->{user}{screen_name} しょうもねぇーな！";
-      print "> $message in_reply_to_status_id => $status->{id}\n";
-      $self->twitter->update({status => $message, in_reply_to_status_id => $status->{id}});
+      $self->tweet("\@$status->{user}{screen_name} しょうもねぇーな！", $status->{id});
       return 1;
     }
     return ();
   },
 );
+
+sub tweet {
+  my $self = shift;
+  my $message = shift;
+  my $in_reply_to_status_id = shift;
+  my %new_status = (status => $message);
+  print "> $message";
+  print " in_reply_to_status_id => $in_reply_to_status_id" if $in_reply_to_status_id;
+  print "\n";
+  $new_status{in_reply_to_status_id} = $in_reply_to_status_id if $in_reply_to_status_id;
+  $self->twitter->update(\%new_status);
+}
 
 sub actions {
   return \@ACTIONS;
@@ -226,23 +228,17 @@ sub new {
   $self->timer->add_target("12:00",
 	  sub {
 	    my $self = shift;
-        my $message = "今日もバッシータイム開始！冷やしパーコ！";
-        print "> $message at 12:00\n";
-        $self->twitter->update({status => $message});
+        $self->tweet("今日もバッシータイム開始！冷やしパーコ！");
 	  });
   $self->timer->add_target("15:00",
 	  sub {
 	    my $self = shift;
-        my $message = "しょうもねぇーな！";
-        print "> $message at 15:00\n";
-        $self->twitter->update({status => $message});
+        $self->tweet("しょうもねぇーな！");
 	  });
   $self->timer->add_target("18:00",
 	  sub {
 	    my $self = shift;
-        my $message = "一人で焼肉食いにいってくる。18000円だけどな！";
-        print "> $message at 18:00\n";
-        $self->twitter->update({status => $message});
+        $self->tweet("一人で焼肉食いにいってくる。18000円だけどな！");
 	  });
   
   return $self;
