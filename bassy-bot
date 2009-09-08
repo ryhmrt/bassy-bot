@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
-$BassyBot::VERSION = '0.1';
+$BassyBot::VERSION = '0.1.1';
 
 my $username = 'bassytime';
 my $spool_interval = 180;
@@ -264,7 +264,7 @@ sub new {
 
 sub time {
   my $self = shift;
-  return (time() - $self->{_LOCAL_DIFF}) % (24*60*60);
+  return (time() + $self->{_LOCAL_DIFF}) % (24*60*60);
 }
 
 sub add_target {
@@ -284,6 +284,7 @@ sub pull {
   my @current_times = grep {
       ($_ > $last_time and $_ <= $time)
       or ($time < $last_time and $_ > $last_time)
+      or ($time < $last_time and $_ <= $time)
     } keys %{$self->{_TARGETS}};
 #  print "result :", join(",", @current_times), "\n";
   $self->{_LAST_TIME} = $time;
