@@ -83,19 +83,22 @@ sub fetch {
     $opt{count} = 1;
   }
   my $statuses = $self->timeline(\%opt);
-  $self->last_status($statuses->[0]) if @$statuses;
+  $self->last_status($statuses->[0]) if $statuses and @$statuses;
   return $statuses;
 }
 
 sub start {
   my $self = shift;
-  $self->fetch();
+  $self->fetch() or die "first fetch failed.\n";
   for (;;) {
     $self->sleep;
     my $timer_action = $self->timer->pull();
     $timer_action->($self) if ($timer_action);
-    for my $status ( reverse @{$self->fetch()} ) {
-      $self->reaction($status);
+    my $statuses = $self->fetch();
+    if ($statuses) {
+      for my $status ( reverse @$statuses ) {
+        $self->reaction($status);
+      }
     }
   }
 }
