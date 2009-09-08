@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
-$BassyBot::VERSION = '0.1.1';
+$BassyBot::VERSION = '0.1.1+';
 
 my $username = 'bassytime';
 my $spool_interval = 180;
@@ -91,12 +91,12 @@ sub start {
   my $self = shift;
   $self->fetch();
   for (;;) {
+    $self->sleep;
     my $timer_action = $self->timer->pull();
     $timer_action->($self) if ($timer_action);
     for my $status ( reverse @{$self->fetch()} ) {
       $self->reaction($status);
     }
-    $self->sleep;
   }
 }
 
