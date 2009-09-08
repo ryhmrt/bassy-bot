@@ -306,7 +306,7 @@ GetOptions(
 	'pass=s' => \$password,
 );
 
-die "--p='YourPassword' plz.\n" unless $password;
+die "--pass='YourPassword' plz.\n" unless $password;
 
 binmode STDOUT, ':encoding(shiftjis)' if $sjis; 
 
