@@ -1,24 +1,33 @@
+#!/usr/bin/perl
+
 use Test::More;# tests => ;
+
+use strict;
+use warnings;
+use utf8;
 
 use BassyBot;
 
 my $mock_util = MockUtil->new();
-*{'TwitterBot::util'} = sub {
-	return $mock_util;
-};
+{
+	no strict 'refs';
+	*{'TwitterBot::util'} = sub {
+		return $mock_util;
+	};
+}
 
-
-my $bot = BassyBot->new(username => 'uname', password => password);
+my $bot = BassyBot->new(username => 'uname', password => 'password');
 
 $bot->reaction({
 	id => 12345,
 	status => 'msg',
 	user => {
+		screen_name => 'riue',
 		id => '18943492',
 	}
 });
-ok($mock_util->{TWEET}, '@riue しょうもねぇーな！');
-ok($mock_util->{REFID}, '12345');
+is($mock_util->{TWEET}, '@riue しょうもねぇーな！');
+is($mock_util->{REFID}, '12345');
 
 done_testing();
 
