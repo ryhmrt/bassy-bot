@@ -24,7 +24,7 @@ my @ACTIONS = (
   sub {
     my $self = shift;
     my $tweet = shift;
-    return grep {$tweet->{user}{id} eq $_} $self->following_ids;
+    return ! grep {$tweet->{user}{id} eq $_} $self->following_ids;
   },
   # RT
   sub {
