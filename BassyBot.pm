@@ -1,5 +1,9 @@
 package BassyBot;
 
+use strict;
+use warnings;
+use utf8;
+
 use Moose;
 extends 'TwitterBot';
 use Time::ParseDate;

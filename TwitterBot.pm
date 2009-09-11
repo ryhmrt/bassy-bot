@@ -1,5 +1,8 @@
 package TwitterBot;
 
+use strict;
+use warnings;
+
 use Moose;
 use AnyEvent::Twitter::Stream;
 use TwitterUtil;

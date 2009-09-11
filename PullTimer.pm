@@ -2,7 +2,6 @@ package PullTimer;
 
 use strict;
 use warnings;
-use utf8;
 
 sub new {
   my $class = shift;

@@ -1,5 +1,8 @@
 package TwitterUtil;
 
+use strict;
+use warnings;
+
 use Moose;
 use Net::Twitter;
 
