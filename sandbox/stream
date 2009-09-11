@@ -1,0 +1,65 @@
+#!/usr/bin/perl
+
+use strict;
+use Net::Twitter;
+use AnyEvent::Twitter::Stream;
+
+my $done = AnyEvent->condvar;
+
+my($username, $password) = @ARGV;
+
+my $nt = Net::Twitter->new(
+    traits   => [qw/API::REST/],
+    username => $username,
+    password => $password
+);
+
+my @following = @{$nt->friends_ids($user)};
+
+if ( my $err = $@ ) {
+    die $@ unless blessed $err && $err->isa('Net::Twitter::Error');
+
+    die "HTTP Response Code: ", $err->code, "\n",
+         "HTTP Message......: ", $err->message, "\n",
+         "Twitter error.....: ", $err->error, "\n";
+}
+
+my $me = $nt->show_user($user);
+
+if ( my $err = $@ ) {
+    die $@ unless blessed $err && $err->isa('Net::Twitter::Error');
+
+    die "HTTP Response Code: ", $err->code, "\n",
+         "HTTP Message......: ", $err->message, "\n",
+         "Twitter error.....: ", $err->error, "\n";
+}
+
+push @following, $me->{id};
+
+my $method = 'filter';
+my $follow = join(',', @following);
+
+print "following: ", $follow, "\n\n";
+
+binmode STDOUT, ":utf8";
+
+my $stream = AnyEvent::Twitter::Stream->new(
+    username => $user,
+    password => $password,
+    method   => $method || "sample",
+    follow   => $follow,
+    on_tweet => sub {
+        my $tweet = shift;
+        print "$tweet->{user}{screen_name}: $tweet->{text}\n";
+    },
+    on_error => sub {
+        my $error = shift;
+        warn "ERROR: $error";
+        $done->send;
+    },
+    on_eof   => sub {
+        $done->send;
+    },
+);
+
+$done->recv;
