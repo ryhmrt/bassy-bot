@@ -7,7 +7,6 @@ use Getopt::Long;
 use BassyBot;
 
 my $username = 'bassytime';
-my $spool_interval = 180;
 
 my $sjis = 0;
 my $password = '';
@@ -23,7 +22,7 @@ die "--pass='YourPassword' plz.\n" unless $password;
 
 binmode STDOUT, ':encoding(shiftjis)' if $sjis; 
 
-BassyBot->new(username => $username, password => $password, spool_interval => $spool_interval, ssl => ! $nossl)->start;
+BassyBot->new(username => $username, password => $password, ssl => ! $nossl)->start;
 
 
 
