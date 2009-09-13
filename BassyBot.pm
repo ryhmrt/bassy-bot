@@ -8,7 +8,7 @@ use Moose;
 extends 'TwitterBot';
 use Time::ParseDate;
 
-$BassyBot::VERSION = '0.2';
+$BassyBot::VERSION = '0.3';
 
 my @ACTIONS = (
   # print out message
@@ -28,6 +28,7 @@ my @ACTIONS = (
   sub {
     my $self = shift;
     my $tweet = shift;
+    $self->logger->debug("check if user:$tweet->{user}{id} is in following-list(".join(",", $self->following_ids).")");
     return ! grep {$tweet->{user}{id} eq $_} $self->following_ids;
   },
   # RT
@@ -35,7 +36,7 @@ my @ACTIONS = (
     my $self = shift;
     my $tweet = shift;
     if ($tweet->{text} =~ /RT \@bassytime\:/) {
-      $self->util->tweet("いってねーよバーカ！ RT \@$tweet->{user}{screen_name}: $tweet->{text}", $tweet->{id});
+      $self->tweet("いってねーよバーカ！ RT \@$tweet->{user}{screen_name}: $tweet->{text}", $tweet->{id});
       return 1;
     }
     return ();
@@ -45,7 +46,7 @@ my @ACTIONS = (
     my $self = shift;
     my $tweet = shift;
     if ($tweet->{text} =~ /揺れた|ゆれた|地震|yrt/) {
-      $self->util->tweet("俺のVM RT \@$tweet->{user}{screen_name}: $tweet->{text}", $tweet->{id});
+      $self->tweet("俺のVM RT \@$tweet->{user}{screen_name}: $tweet->{text}", $tweet->{id});
       return 1;
     }
     return ();
@@ -55,7 +56,7 @@ my @ACTIONS = (
     my $self = shift;
     my $tweet = shift;
     if ($tweet->{text} =~ /\@bassytime/) {
-      $self->util->tweet("\@$tweet->{user}{screen_name} ホントしょうもねぇーな！", $tweet->{id});
+      $self->tweet("\@$tweet->{user}{screen_name} ホントしょうもねぇーな！", $tweet->{id});
       return 1;
     }
     return ();
@@ -65,7 +66,7 @@ my @ACTIONS = (
     my $self = shift;
     my $tweet = shift;
     if ($tweet->{text} =~ /unko|utm|ちん|チン/) {
-      $self->util->tweet("\@$tweet->{user}{screen_name} この厨二がっ！", $tweet->{id});
+      $self->tweet("\@$tweet->{user}{screen_name} この厨二がっ！", $tweet->{id});
       return 1;
     }
     return ();
@@ -75,7 +76,7 @@ my @ACTIONS = (
     my $self = shift;
     my $tweet = shift;
     if ($tweet->{user}{id} eq '18943492') {
-      $self->util->tweet("\@$tweet->{user}{screen_name} しょうもねぇーな！", $tweet->{id});
+      $self->tweet("\@$tweet->{user}{screen_name} しょうもねぇーな！", $tweet->{id});
       return 1;
     }
     return ();
@@ -87,15 +88,15 @@ sub BUILD {
 
 	$self->timer->add_target("12:00", sub {
 		my $self = shift;
-		$self->util->tweet("今日もバッシータイム開始！冷やしパーコ！");
+		$self->tweet("今日もバッシータイム開始！冷やしパーコ！");
 	});
 	$self->timer->add_target("15:00", sub {
 		my $self = shift;
-		$self->util->tweet("しょうもねぇーな！");
+		$self->tweet("しょうもねぇーな！");
 	});
 	$self->timer->add_target("18:00", sub {
 		my $self = shift;
-		$self->util->tweet("一人で焼肉食いにいってくる。18000円だけどな！");
+		$self->tweet("一人で焼肉食いにいってくる。18000円だけどな！");
 	});
 
 	$self->logger->info("bassy-bot initialized.");
