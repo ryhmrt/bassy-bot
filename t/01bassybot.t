@@ -1,56 +1,56 @@
 #!/usr/bin/perl
 
-use Test::More;# tests => ;
-
 use strict;
 use warnings;
 use utf8;
 
+use Test::More 'no_plan';
+
 use BassyBot;
+use Test::MockObject;
 
-my $mock_util = MockUtil->new();
-{
-	no strict 'refs';
-	*{'TwitterBot::util'} = sub {
-		return $mock_util;
-	};
-}
+binmode STDOUT, ':encoding(utf8)';
 
-my $bot = BassyBot->new(username => 'uname', password => 'password');
+my $bot = BassyBotTest->new(username => 'uname', password => 'password');
 
 $bot->reaction({
 	id => 12345,
 	status => 'msg',
+	created_at => '2009/9/12 18:02:00',
+	text => 'くだらない話',
 	user => {
 		screen_name => 'riue',
 		id => '18943492',
 	}
 });
-is($mock_util->{TWEET}, '@riue しょうもねぇーな！');
-is($mock_util->{REFID}, '12345');
-
-done_testing();
+is($bot->util->{TWEET}, '@riue しょうもねぇーな！');
+is($bot->util->{REFID}, '12345');
 
 ############################################################
-package MockUtil;
+BEGIN {
+	package BassyBotTest;
 
-sub new {
-	return bless {}, shift;	
-}
+	use Moose;
+	extends 'BassyBot';
+	use Test::MockObject;
 
-sub friends_ids {
-	return [1,2,3,18943492];
-}
-
-sub user {
-	return {
-		id => 99,
-		screen_name => 'myname'
-		};	
-}
-
-sub tweet {
-	my $self = shift;
-	$self->{TWEET} = shift;
-	$self->{REFID} = shift;
+	sub _build_twitter_util {
+		my $mock = Test::MockObject->new();
+		$mock->set_isa('TwitterUtil');
+		$mock->mock(friends_ids => sub {
+			return [1,2,3,18943492];
+		});
+		$mock->mock(user => sub {
+			return {
+				id => 99,
+				screen_name => 'myname'
+				};
+		});
+		$mock->mock(tweet => sub {
+			my $self = shift;
+			$self->{TWEET} = shift;
+			$self->{REFID} = shift;
+		});
+		return $mock;
+	}
 }
