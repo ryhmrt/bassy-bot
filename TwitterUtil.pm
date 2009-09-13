@@ -31,6 +31,13 @@ has 'friends_ids' => (
 	builder => '_retrieve_friends_ids',
 );
 
+has 'followers_ids' => (
+	isa => 'ArrayRef',
+	is => 'rw',
+	lazy => 1,
+	builder => '_retrieve_followers_ids',
+);
+
 sub _build_net_twitter {
 	my $self = shift;
 	return Net::Twitter->new(
@@ -55,6 +62,13 @@ sub _retrieve_friends_ids {
 	});
 }
 
+sub _retrieve_followers_ids {
+	my $self = shift;
+	return &_trap_twitter_error( sub{
+		$self->twitter->followers_ids($self->username);
+	});
+}
+
 sub _trap_twitter_error {
 	my $sub = shift;
 	my $result = $sub->();
@@ -68,9 +82,22 @@ sub _trap_twitter_error {
 	return $result;
 }
 
-sub refresh {
+sub refresh_friends_ids {
 	my $self = shift;
-	$self->friends_ids($self->_retrieve_friends_ids());
+	$self->meta->get_attribute('friends_ids')->clear_value($self);
+}
+
+sub refresh_followers_ids {
+	my $self = shift;
+	$self->meta->get_attribute('followers_ids')->clear_value($self);
+}
+
+sub create_friend {
+	my $self = shift;
+	my $id = shift;
+	return &_trap_twitter_error( sub{
+		$self->twitter->create_friend($id);
+	});
 }
 
 sub tweet {

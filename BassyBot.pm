@@ -7,20 +7,8 @@ use utf8;
 use Moose;
 extends 'TwitterBot';
 use Time::ParseDate;
-use Log::Log4perl;
 
 $BassyBot::VERSION = '0.2';
-
-has 'logger' => (
-	isa => 'Log::Log4perl::Logger',
-	is => 'ro',
-	lazy => 1,
-	builder => '_build_logger',
-);
-
-sub _build_logger {
-	return Log::Log4perl->get_logger(__PACKAGE__);
-}
 
 my @ACTIONS = (
   # print out message
