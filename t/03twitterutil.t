@@ -11,7 +11,7 @@ use Test::MockObject;
 binmode STDOUT, ':encoding(utf8)';
 
 ############################################################
-# test updating friends
+# test refreshing attributes
 {
 	my $friends_ids_call_count = 0;
 	my $followers_ids_call_count = 0;
