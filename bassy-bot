@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use Getopt::Long;
+use Log::Log4perl;
 use BassyBot;
 
 my $username = 'bassytime';
@@ -21,6 +22,8 @@ GetOptions(
 die "--pass='YourPassword' plz.\n" unless $password;
 
 binmode STDOUT, ':encoding(shiftjis)' if $sjis; 
+
+Log::Log4perl->init("bassy-bot-logger.conf");
 
 BassyBot->new(username => $username, password => $password, ssl => ! $nossl)->start;
 

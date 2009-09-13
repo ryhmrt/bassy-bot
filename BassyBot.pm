@@ -7,15 +7,27 @@ use utf8;
 use Moose;
 extends 'TwitterBot';
 use Time::ParseDate;
+use Log::Log4perl;
 
 $BassyBot::VERSION = '0.2';
+
+has 'logger' => (
+	isa => 'Log::Log4perl::Logger',
+	is => 'ro',
+	lazy => 1,
+	builder => '_build_logger',
+);
+
+sub _build_logger {
+	return Log::Log4perl->get_logger(__PACKAGE__);
+}
 
 my @ACTIONS = (
   # print out message
   sub {
     my $self = shift;
     my $tweet = shift;
-    print "Searching reaction for ", &_format_tweet($tweet), "\n";
+    $self->logger->info("Searching reaction for ". &_format_tweet($tweet));
     return ();
   },
   # ignore myself
@@ -97,6 +109,8 @@ sub BUILD {
 		my $self = shift;
 		$self->util->tweet("一人で焼肉食いにいってくる。18000円だけどな！");
 	});
+
+	$self->logger->info("bassy-bot initialized.");
 }
 
 sub _build_actions {
@@ -115,6 +129,12 @@ sub _format_tweet {
     $ago = int($ago/60/60) . 'h';
   }
   return "$ago ago: $tweet->{id} <$tweet->{user}{screen_name}/$tweet->{user}{id}> $tweet->{text}";
+}
+
+sub tweet {
+	my $self = shift;
+	$self->logger->info("> $_[0]".($_[1] ? " in_reply_to_status_id => $_[1]" : ""));
+	$self->util->tweet(@_);
 }
 
 no Moose;

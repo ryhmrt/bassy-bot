@@ -78,9 +78,6 @@ sub tweet {
   my $message = shift;
   my $in_reply_to_status_id = shift;
   my %new_status = (status => $message);
-  print "> $message";
-  print " in_reply_to_status_id => $in_reply_to_status_id" if $in_reply_to_status_id;
-  print "\n";
   $new_status{in_reply_to_status_id} = $in_reply_to_status_id if $in_reply_to_status_id;
   $self->twitter->update(\%new_status);
 }
