@@ -9,19 +9,19 @@ use BassyBot;
 
 my $username = 'bassytime';
 
-my $sjis = 0;
+my $encoding = '';
 my $password = '';
 my $nossl = 0;
 
 GetOptions(
-	'sjis' => \$sjis,
+	'encoding=s' => \$encoding,
 	'pass=s' => \$password,
 	'nossl' => \$nossl,
 );
 
 die "--pass='YourPassword' plz.\n" unless $password;
 
-binmode STDOUT, ':encoding(shiftjis)' if $sjis; 
+binmode STDOUT, ":encoding($encoding)" if $encoding;
 
 Log::Log4perl->init("bassy-bot-logger.conf");
 
