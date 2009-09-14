@@ -21,9 +21,10 @@ GetOptions(
 
 die "--pass='YourPassword' plz.\n" unless $password;
 
-binmode STDOUT, ":encoding($encoding)" if $encoding;
-
 Log::Log4perl->init("bassy-bot-logger.conf");
+
+binmode STDOUT, ":encoding($encoding)" if $encoding;
+binmode STDERR, ":encoding($encoding)" if $encoding;
 
 BassyBot->new(username => $username, password => $password, ssl => ! $nossl)->start;
 
