@@ -125,7 +125,7 @@ sub not_following_followers_ids {
 	my $self = shift;
 	return grep {
 		my $id = $_;
-		! grep {$_ eq $id} @{$self->util->friends_ids} ;
+		! grep {$_ eq $id} @{$self->util->friends_ids}, @{$self->util->blocking_ids};
 	} @{$self->util->followers_ids};
 }
 
@@ -133,6 +133,7 @@ sub update_friends {
 	my $self = shift;
 	$self->util->refresh_friends_ids;
 	$self->util->refresh_followers_ids;
+	$self->util->refresh_blocking_ids;
 	for my $friend_id ($self->not_following_followers_ids) {
 		my $user = $self->util->create_friend($friend_id);
 		$self->logger->info("new friend <$user->{screen_name}/$user->{id}> added.");

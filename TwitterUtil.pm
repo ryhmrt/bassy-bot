@@ -26,16 +26,23 @@ has 'user' => (
 
 has 'friends_ids' => (
 	isa => 'ArrayRef',
-	is => 'rw',
+	is => 'ro',
 	lazy => 1,
 	builder => '_retrieve_friends_ids',
 );
 
 has 'followers_ids' => (
 	isa => 'ArrayRef',
-	is => 'rw',
+	is => 'ro',
 	lazy => 1,
 	builder => '_retrieve_followers_ids',
+);
+
+has 'blocking_ids' => (
+	isa => 'ArrayRef',
+	is => 'ro',
+	lazy => 1,
+	builder => '_retrieve_blocking_ids',
 );
 
 sub _build_net_twitter {
@@ -69,6 +76,13 @@ sub _retrieve_followers_ids {
 	});
 }
 
+sub _retrieve_blocking_ids {
+	my $self = shift;
+	return &_trap_twitter_error( sub{
+		$self->twitter->blocking_ids($self->username);
+	});
+}
+
 sub _trap_twitter_error {
 	my $sub = shift;
 	my $result = $sub->();
@@ -90,6 +104,11 @@ sub refresh_friends_ids {
 sub refresh_followers_ids {
 	my $self = shift;
 	$self->meta->get_attribute('followers_ids')->clear_value($self);
+}
+
+sub refresh_blocking_ids {
+	my $self = shift;
+	$self->meta->get_attribute('blocking_ids')->clear_value($self);
 }
 
 sub create_friend {
