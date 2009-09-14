@@ -79,7 +79,7 @@ sub _retrieve_followers_ids {
 sub _retrieve_blocking_ids {
 	my $self = shift;
 	return &_trap_twitter_error( sub{
-		$self->twitter->blocking_ids($self->username);
+		$self->twitter->blocking_ids();
 	});
 }
 
