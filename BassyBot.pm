@@ -83,6 +83,16 @@ my @ACTIONS = (
 		}
 		return ();
 	},
+	# わかめじゃねーよ！！
+	sub {
+		my $self = shift;
+		my $tweet = shift;
+		if ($tweet->{text} =~ /(わかめ|ワカメ)/) {
+			$self->tweet("$1じゃねーよ！！ RT \@$tweet->{user}{screen_name}: $tweet->{text}", $tweet->{id});
+			return 1;
+		}
+		return ();
+	},
 	# この厨二がっ！
 	sub {
 		my $self = shift;

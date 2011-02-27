@@ -57,4 +57,18 @@ binmode STDOUT, ':encoding(utf8)';
 
 	is($bot->util->{TWEET}, '@riue しょうもねぇーな！');
 	is($bot->util->{REFID}, '12345');
+
+	$bot->reaction({
+		'id' => 6789,
+		'status' => 'msg',
+		'created_at' => '2009/9/12 18:02:00',
+		'text' => 'わかめ野郎',
+		'user' => {
+			'screen_name' => 'riue',
+			'id' => '18943492',
+		}
+	});
+
+	is($bot->util->{TWEET}, 'わかめじゃねーよ！！ RT @riue: わかめ野郎');
+	is($bot->util->{REFID}, '6789');
 }
