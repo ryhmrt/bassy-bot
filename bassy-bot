@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl -w
 
 use strict;
 use warnings;
@@ -10,23 +10,30 @@ use BassyBot;
 my $username = 'bassytime';
 
 my $encoding = '';
-my $password = '';
+my $consumer_key = '';
+my $consumer_secret = '';
+my $token = '';
+my $token_secret = '';
 my $nossl = 0;
 
 GetOptions(
 	'encoding=s' => \$encoding,
-	'pass=s' => \$password,
 	'nossl' => \$nossl,
+	'consumer_key=s' => \$consumer_key,
+	'consumer_secret=s' => \$consumer_secret,
+	'token=s' => \$token,
+	'token_secret=s' => \$token_secret,
 );
-
-die "--pass='YourPassword' plz.\n" unless $password;
 
 Log::Log4perl->init("bassy-bot-logger.conf");
 
 binmode STDOUT, ":encoding($encoding)" if $encoding;
 binmode STDERR, ":encoding($encoding)" if $encoding;
 
-BassyBot->new(username => $username, password => $password, ssl => ! $nossl)->start;
-
-
-
+BassyBot->new(
+	'username' => $username,
+	'consumer_key' => $consumer_key,
+	'consumer_secret' => $consumer_secret,
+	'token' => $token,
+	'token_secret' => $token_secret,
+	'ssl' => ! $nossl)->start;

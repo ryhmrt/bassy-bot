@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl -w
 
 use strict;
 use warnings;
@@ -8,6 +8,9 @@ use Test::More 'no_plan';
 
 use BassyBot;
 use Test::MockObject;
+use Log::Log4perl;
+
+Log::Log4perl->init("bassy-bot-logger.conf");
 
 binmode STDOUT, ':encoding(utf8)';
 
@@ -15,21 +18,24 @@ binmode STDOUT, ':encoding(utf8)';
 # test reaction for @riue's tweet
 {
 	my $bot = BassyBot->new(
-		username => 'uname',
-		password => 'password',
-		util => sub {
+		'username' => 'uname',
+		'consumer_key' => 'ck',
+		'consumer_secret' => 'cs',
+		'token' => 'tk',
+		'token_secret' => 'ts',
+		'util' => sub {
 			my $mock = Test::MockObject->new();
 			$mock->set_isa('TwitterUtil');
-			$mock->mock(friends_ids => sub {
+			$mock->mock('friends_ids' => sub {
 				return [1,2,3,18943492];
 			});
-			$mock->mock(user => sub {
+			$mock->mock('user' => sub {
 				return {
-					id => 99,
-					screen_name => 'myname'
-					};
+					'id' => 99,
+					'screen_name' => 'myname'
+				};
 			});
-			$mock->mock(tweet => sub {
+			$mock->mock('tweet' => sub {
 				my $self = shift;
 				$self->{TWEET} = shift;
 				$self->{REFID} = shift;
@@ -39,13 +45,13 @@ binmode STDOUT, ':encoding(utf8)';
 	);
 	
 	$bot->reaction({
-		id => 12345,
-		status => 'msg',
-		created_at => '2009/9/12 18:02:00',
-		text => 'くだらない話',
-		user => {
-			screen_name => 'riue',
-			id => '18943492',
+		'id' => 12345,
+		'status' => 'msg',
+		'created_at' => '2009/9/12 18:02:00',
+		'text' => 'くだらない話',
+		'user' => {
+			'screen_name' => 'riue',
+			'id' => '18943492',
 		}
 	});
 

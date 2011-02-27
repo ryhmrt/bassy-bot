@@ -2,123 +2,85 @@ package TwitterBot;
 
 use strict;
 use warnings;
+use utf8;
 
-use Moose;
-use AnyEvent::Twitter::Stream;
+use Class::Accessor "antlers";
 use TwitterUtil;
 use PullTimer;
 use Log::Log4perl;
 
-has 'username' => (isa => 'Str', is => 'ro', required => 1);
-has 'password' => (isa => 'Str', is => 'ro', required => 1);
-has 'ssl' => (isa => 'Bool', is => 'ro', default => 1);
-has 'auto_update_friends_interval' => (isa => 'Int', is => 'ro', default => 60*60*24);
+has 'username' => (isa => 'Str', is => 'ro');
+has 'consumer_key' => (isa => 'Str', is => 'ro');
+has 'consumer_secret' => (isa => 'Str', is => 'ro');
+has 'token' => (isa => 'Str', is => 'ro');
+has 'token_secret' => (isa => 'Str', is => 'ro');
+has 'ssl' => (isa => 'Bool', is => 'ro');
+has 'timer' => (isa => 'PullTimer', is => 'ro');
+has 'util' => (isa => 'TwitterUtil', is => 'ro');
+has 'logger' => (isa => 'Log::Log4perl', is => 'ro');
+has 'last_status' => (is => 'rw');
 
-has 'util' => (
-	isa => 'TwitterUtil',
-	is => 'ro',
-	lazy => 1,
-	builder => '_build_twitter_util',
-);
+sub new {
+	my $class = shift;
+	my %opt = @_;
+	return $class->SUPER::new({
+		'logger' => $opt{'logger'} || Log::Log4perl->get_logger($class),
+		'timer' => $opt{'timer'} || PullTimer->new(),
+		'util' => $opt{'util'} || TwitterUtil->new(@_),
+	});
+}
 
-has 'timer' => (
-	isa => 'PullTimer',
-	is => 'ro',
-	builder => '_build_timer',
-);
-
-has 'actions' => (
-	isa => 'ArrayRef',
-	is => 'ro',
-	builder => '_build_actions',
-);
-
-has 'logger' => (
-	isa => 'Log::Log4perl::Logger',
-	is => 'ro',
-	lazy => 1,
-	builder => '_build_logger',
-);
-
-sub BUILD {
+sub sleep {
 	my $self = shift;
-	
-	my $done = AnyEvent->condvar;
-	$self->{_CV} = $done;
-
-	my $stream = AnyEvent::Twitter::Stream->new(
-		username => $self->username,
-		password => $self->password,
-		method   => 'filter',
-		follow   => join(',', $self->following_ids),
-		on_tweet => sub {
-			my $tweet = shift;
-			$self->reaction($tweet);
-		},
-		on_error => sub {
-			my $error = shift;
-			warn "ERROR: $error";
-			$done->send;
-		},
-		on_eof   => sub {
-			$done->send;
-		},
-	);
-	
-	my $timer = AnyEvent->timer(
-		after => 10,
-		interval => 10,
-		cb => sub {
-			for my $sub ($self->timer->pull) {
-				$sub->($self);
-			}
-		},
-	);
-
-	my $friends_updater = AnyEvent->timer(
-		after => 0,
-		interval => $self->auto_update_friends_interval,
-		cb => sub {
-			$self->update_friends;
-		},
-	);
-
-	$self->{_EVENTS} = [];
-	push @{$self->{_EVENTS}}, $timer;
-	push @{$self->{_EVENTS}}, $stream;
-	push @{$self->{_EVENTS}}, $friends_updater;
+	sleep 30;
 }
 
-sub _build_twitter_util {
+sub fetch {
 	my $self = shift;
-	return TwitterUtil->new(
-		username => $self->username,
-		password => $self->password,
-		ssl => $self->ssl,
-	);
-}
-
-sub _build_logger {
-	my $self = shift;
-	return Log::Log4perl->get_logger(ref $self);
-}
-
-sub _build_timer {
-	return PullTimer->new();	
-}
-
-sub _build_actions {
-	die "override _build_actions method!";
+	my %opt;
+	if ($self->last_status()) {
+		$opt{'since_id'} = $self->last_status()->{id};
+		$opt{'count'} = 100;
+		$self->logger->debug("since_id: $opt{'since_id'}.");
+	} else {
+		$opt{'count'} = 1;
+		$self->logger->debug("no since_id.");
+	}
+	my $statuses = $self->util->timeline(\%opt);
+	$self->last_status($statuses->[0]) if $statuses and @$statuses;
+	return $statuses;
 }
 
 sub start {
 	my $self = shift;
-	$self->{_CV}->recv;
+	$self->fetch() or die "first fetch failed.\n";
+	for (;;) {
+		while (my $timer_action = $self->timer->pull()) {
+			$timer_action->($self);
+		}
+		my $statuses = $self->fetch();
+		if ($statuses) {
+			$self->logger->info(scalar(@$statuses) . ' statuses.');
+			for my $status ( reverse @$statuses ) {
+				$self->reaction($status);
+			}
+		}
+		$self->sleep;
+	}
 }
 
-sub following_ids {
+sub reaction {
 	my $self = shift;
-	return $self->util->user->{id}, @{$self->util->friends_ids};
+	my $status = shift;
+	for my $action (@{$self->actions()}) {
+		last if $action->($self, $status);
+	}
+}
+
+# each action methods will called with status object
+# the action method should return true if you want to block other action methods
+sub actions {
+	die "plz override actions method! it should return action array-ref\n";
 }
 
 sub not_following_followers_ids {
@@ -141,15 +103,10 @@ sub update_friends {
 	$self->util->refresh_friends_ids;
 }
 
-sub reaction {
-  my $self = shift;
-  my $tweet = shift;
-  for my $action (@{$self->actions}) {
-    last if $action->($self, $tweet);
-  }
+sub tweet {
+	my $self = shift;
+	$self->logger->info("> $_[0]".($_[1] ? " in_reply_to_status_id => $_[1]" : ""));
+	$self->util->tweet(@_);
 }
-
-no Moose;
-__PACKAGE__->meta->make_immutable();
 
 1;

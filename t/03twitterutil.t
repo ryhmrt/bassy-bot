@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl -w
 
 use strict;
 use warnings;
@@ -7,6 +7,9 @@ use utf8;
 use Test::More 'no_plan';
 use TwitterUtil;
 use Test::MockObject;
+use Log::Log4perl;
+
+Log::Log4perl->init("bassy-bot-logger.conf");
 
 binmode STDOUT, ':encoding(utf8)';
 
@@ -17,27 +20,30 @@ binmode STDOUT, ':encoding(utf8)';
 	my $followers_ids_call_count = 0;
 	my $blocking_ids_call_count = 0;
 	my $util = TwitterUtil->new(
-		username => 'uname',
-		password => 'password',
-		ssl => 1,
-		twitter => (sub {
+		'username' => 'uname',
+		'consumer_key' => 'ck',
+		'consumer_secret' => 'cs',
+		'token' => 'tk',
+		'token_secret' => 'ts',
+		'ssl' => 1,
+		'twitter' => (sub {
 			my $mock = Test::MockObject->new();
 			$mock->set_isa('Net::Twitter');
-			$mock->mock(show_user => sub {
+			$mock->mock('show_user' => sub {
 				return {
-					id => 99,
-					screen_name => 'myname'
+					'id' => 99,
+					'screen_name' => 'myname'
 				};
 			});
-			$mock->mock(friends_ids => sub {
+			$mock->mock('friends_ids' => sub {
 				$friends_ids_call_count++;
 				return [1,2,3,18943492];
 			});
-			$mock->mock(followers_ids => sub {
+			$mock->mock('followers_ids' => sub {
 				$followers_ids_call_count++;
 				return [1,2,3,4,5,6,7,8,18943492];
 			});
-			$mock->mock(blocking_ids => sub {
+			$mock->mock('blocking_ids' => sub {
 				$blocking_ids_call_count++;
 				return [4,8];
 			});

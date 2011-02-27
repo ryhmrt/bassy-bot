@@ -2,83 +2,59 @@ package TwitterUtil;
 
 use strict;
 use warnings;
+use utf8;
 
-use Moose;
+use Class::Accessor "antlers";
 use Net::Twitter;
 
-has 'username' => (isa => 'Str', is => 'ro', required => 1);
-has 'password' => (isa => 'Str', is => 'ro', required => 1);
-has 'ssl' => (isa => 'Bool', is => 'ro', default => 1);
+has 'username' => (isa => 'Str', is => 'ro');
+has 'consumer_key' => (isa => 'Str', is => 'ro');
+has 'consumer_secret' => (isa => 'Str', is => 'ro');
+has 'token' => (isa => 'Str', is => 'ro');
+has 'token_secret' => (isa => 'Str', is => 'ro');
+has 'ssl' => (isa => 'Bool', is => 'ro');
 
-has 'twitter' => (
-	isa => 'Net::Twitter',
-	is => 'ro',
-	lazy => 1,
-	builder => '_build_net_twitter',
-);
+sub new {
+	my $class = shift;
+	return $class->SUPER::new({@_});
+}
 
-has 'user' => (
-	isa => 'HashRef',
-	is => 'ro',
-	lazy => 1,
-	builder => '_retrieve_myself',
-);
-
-has 'friends_ids' => (
-	isa => 'ArrayRef',
-	is => 'ro',
-	lazy => 1,
-	builder => '_retrieve_friends_ids',
-);
-
-has 'followers_ids' => (
-	isa => 'ArrayRef',
-	is => 'ro',
-	lazy => 1,
-	builder => '_retrieve_followers_ids',
-);
-
-has 'blocking_ids' => (
-	isa => 'ArrayRef',
-	is => 'ro',
-	lazy => 1,
-	builder => '_retrieve_blocking_ids',
-);
-
-sub _build_net_twitter {
+sub twitter {
 	my $self = shift;
-	return Net::Twitter->new(
-		traits   => [qw/API::REST/],
-		username => $self->username,
-		password => $self->password,
-		ssl => $self->ssl,
+	return $self->{'twitter'} ||= Net::Twitter->new(
+		traits   => [qw/OAuth API::REST/],
+		'consumer_key' => $self->consumer_key,
+		'consumer_secret' => $self->consumer_secret,
+		'access_token' => $self->token,
+		'access_token_secret' => $self->token_secret,
+		'ssl' => $self->ssl,
 	) or die "can't create Net::Twitter";
 }
 
-sub _retrieve_myself {
+sub user {
 	my $self = shift;
-	return &_trap_twitter_error( sub{
+	return $self->{'user'} ||= &_trap_twitter_error( sub{
 		return $self->twitter->show_user($self->username);
 	});
 }
 
-sub _retrieve_friends_ids {
+sub friends_ids {
 	my $self = shift;
-	return &_trap_twitter_error( sub{
+	return $self->{'friends_ids'} ||= &_trap_twitter_error( sub{
 		$self->twitter->friends_ids($self->username);
 	});
 }
 
-sub _retrieve_followers_ids {
+sub followers_ids {
 	my $self = shift;
-	return &_trap_twitter_error( sub{
+	return $self->{'followers_ids'} ||= &_trap_twitter_error( sub{
 		$self->twitter->followers_ids($self->username);
 	});
 }
 
-sub _retrieve_blocking_ids {
+sub blocking_ids {
 	my $self = shift;
-	return &_trap_twitter_error( sub{
+	return $self->{'blocking_ids'} ||= &_trap_twitter_error( sub{
 		$self->twitter->blocking_ids();
 	});
 }
@@ -98,17 +74,17 @@ sub _trap_twitter_error {
 
 sub refresh_friends_ids {
 	my $self = shift;
-	$self->meta->get_attribute('friends_ids')->clear_value($self);
+	delete $self->{'friends_ids'};
 }
 
 sub refresh_followers_ids {
 	my $self = shift;
-	$self->meta->get_attribute('followers_ids')->clear_value($self);
+	delete $self->{'followers_ids'};
 }
 
 sub refresh_blocking_ids {
 	my $self = shift;
-	$self->meta->get_attribute('blocking_ids')->clear_value($self);
+	delete $self->{'blocking_ids'};
 }
 
 sub create_friend {
@@ -128,7 +104,14 @@ sub tweet {
   $self->twitter->update(\%new_status);
 }
 
-no Moose;
-__PACKAGE__->meta->make_immutable();
+sub timeline {
+	my $self = shift;
+	my $opt = shift;
+	my $statuses;
+	return &_trap_twitter_error( sub{
+		$self->twitter->home_timeline($opt);
+	});
+}
+
 
 1;

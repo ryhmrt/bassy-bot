@@ -7,8 +7,8 @@ sub new {
   my $class = shift;
   my @local_epoch = localtime(0);
   my $self = bless {
-    _LOCAL_DIFF => $local_epoch[0] + $local_epoch[1]*60 + $local_epoch[2]*60*60,
-    _TARGETS => {}
+    '_LOCAL_DIFF' => $local_epoch[0] + $local_epoch[1]*60 + $local_epoch[2]*60*60,
+    '_TARGETS' => {}
   }, $class;
   $self->{_LAST_TIME} = $self->time();
   return $self;
