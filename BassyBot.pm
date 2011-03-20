@@ -115,6 +115,12 @@ my @ACTIONS = (
 	},
 );
 
+sub tweet {
+	my $self = shift;
+	$_[0] .= ' #bassytime';
+	SUPER->tweet(@_);
+}
+
 sub actions {
 	return \@ACTIONS;
 }
