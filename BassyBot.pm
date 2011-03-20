@@ -64,15 +64,15 @@ my @ACTIONS = (
 		return ();
 	},
 	# 俺のVM
-	sub {
-		my $self = shift;
-		my $tweet = shift;
-		if ($tweet->{text} =~ /揺れた|ゆれた|地震|yrt/) {
-			$self->tweet("俺のVM RT \@$tweet->{user}{screen_name}: $tweet->{text}", $tweet->{id});
-			return 1;
-		}
-		return ();
-	},
+#sub {
+#		my $self = shift;
+#		my $tweet = shift;
+#		if ($tweet->{text} =~ /揺れた|ゆれた|地震|yrt/) {
+#			$self->tweet("俺のVM RT \@$tweet->{user}{screen_name}: $tweet->{text}", $tweet->{id});
+#			return 1;
+#		}
+#		return ();
+#	},
 	# Reply
 	sub {
 		my $self = shift;
