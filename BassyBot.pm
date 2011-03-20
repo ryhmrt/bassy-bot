@@ -119,7 +119,7 @@ my @ACTIONS = (
 sub tweet {
 	my $self = shift;
 	$_[0] .= ' #bassytime';
-	$self->SUPER->tweet(@_);
+	$self->SUPER::tweet(@_);
 }
 
 sub actions {
