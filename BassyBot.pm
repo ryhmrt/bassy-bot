@@ -78,7 +78,7 @@ my @ACTIONS = (
 		my $self = shift;
 		my $tweet = shift;
 		if ($tweet->{text} =~ /\@bassytime/) {
-			$self->tweet("\@$tweet->{user}{screen_name} ホントしょうもねぇーな！", $tweet->{id});
+			$self->tweet("\@$tweet->{user}{screen_name} ホントしょうもねぇーな！ RT \@$tweet->{user}{screen_name}: $tweet->{text}", $tweet->{id});
 			return 1;
 		}
 		return ();
