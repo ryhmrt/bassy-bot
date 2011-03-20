@@ -16,6 +16,7 @@ sub new {
 	$self->timer->add_target("12:00", sub {
 		my $self = shift;
 		$self->tweet("今日もバッシータイム開始！冷やしパーコ！");
+		$self->update_friends();
 	});
 	$self->timer->add_target("15:00", sub {
 		my $self = shift;

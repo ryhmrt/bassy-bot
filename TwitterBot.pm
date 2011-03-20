@@ -53,6 +53,7 @@ sub fetch {
 
 sub start {
 	my $self = shift;
+	$self->update_friends();
 	$self->fetch() or die "first fetch failed.\n";
 	for (;;) {
 		while (my $timer_action = $self->timer->pull()) {
