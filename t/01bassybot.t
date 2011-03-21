@@ -55,7 +55,7 @@ binmode STDOUT, ':encoding(utf8)';
 		}
 	});
 
-	is($bot->util->{TWEET}, '@riue しょうもねぇーな！');
+	is($bot->util->{TWEET}, '@riue しょうもねぇーな！ #bassytime');
 	is($bot->util->{REFID}, '12345');
 
 	$bot->reaction({
@@ -69,6 +69,6 @@ binmode STDOUT, ':encoding(utf8)';
 		}
 	});
 
-	is($bot->util->{TWEET}, 'わかめじゃねーよ！！ RT @riue: わかめ野郎');
+	is($bot->util->{TWEET}, 'わかめじゃねーよ！！ RT @riue: わかめ野郎 #bassytime');
 	is($bot->util->{REFID}, '6789');
 }
