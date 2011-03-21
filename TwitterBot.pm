@@ -56,7 +56,7 @@ sub start {
 	$self->update_friends();
 	$self->fetch() or die "first fetch failed.\n";
 	for (;;) {
-		while (my $timer_action = $self->timer->pull()) {
+		for my $timer_action ($self->timer->pull()) {
 			$timer_action->($self);
 		}
 		my $statuses = $self->fetch();
