@@ -98,7 +98,7 @@ my @ACTIONS = (
 	sub {
 		my $self = shift;
 		my $tweet = shift;
-		if ($tweet->{text} =~ /unko|utm|ちん|チン/) {
+		if ($tweet->{text} =~ /unko|utm|ちん[○こ]|チン[○コ]/) {
 			$self->tweet("\@$tweet->{user}{screen_name} この厨二がっ！", $tweet->{id});
 			return 1;
 		}

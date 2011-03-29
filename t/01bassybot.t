@@ -71,4 +71,34 @@ binmode STDOUT, ':encoding(utf8)';
 
 	is($bot->util->{TWEET}, 'わかめじゃねーよ！！ RT @riue: わかめ野郎 #bassytime');
 	is($bot->util->{REFID}, '6789');
+
+	$bot->reaction({
+		'id' => 123,
+		'status' => 'msg',
+		'created_at' => '2009/9/12 18:02:00',
+		'text' => 'おちん○',
+		'user' => {
+			'screen_name' => 'foo',
+			'id' => '1',
+		}
+	});
+
+	is($bot->util->{TWEET}, '@foo この厨二がっ！ #bassytime');
+	is($bot->util->{REFID}, 123);
+
+	$bot->util->{TWEET} = undef;
+	$bot->util->{REFID} = undef;
+	$bot->reaction({
+		'id' => 6789,
+		'status' => 'msg',
+		'created_at' => '2009/9/12 18:02:00',
+		'text' => 'きちんと',
+		'user' => {
+			'screen_name' => 'foo',
+			'id' => '1',
+		}
+	});
+
+	is($bot->util->{TWEET}, undef);
+	is($bot->util->{REFID}, undef);
 }
