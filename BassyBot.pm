@@ -104,16 +104,16 @@ my @ACTIONS = (
 		}
 		return ();
 	},
-	# @riue(18943492)
-	sub {
-		my $self = shift;
-		my $tweet = shift;
-		if ($tweet->{user}{id} eq '18943492') {
-			$self->tweet("\@$tweet->{user}{screen_name} しょうもねぇーな！", $tweet->{id});
-			return 1;
-		}
-		return ();
-	},
+#	# @riue(18943492)
+#	sub {
+#		my $self = shift;
+#		my $tweet = shift;
+#		if ($tweet->{user}{id} eq '18943492') {
+#			$self->tweet("\@$tweet->{user}{screen_name} しょうもねぇーな！", $tweet->{id});
+#			return 1;
+#		}
+#		return ();
+#	},
 );
 
 sub tweet {
