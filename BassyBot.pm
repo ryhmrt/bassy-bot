@@ -54,6 +54,15 @@ my @ACTIONS = (
 		$self->logger->debug("check if user:$tweet->{user}{id} is in friends-list(".join(",", @friends).")");
 		return ! grep {$tweet->{user}{id} eq $_} @friends;
 	},
+	# ignore official RT
+	sub {
+		my $self = shift;
+		my $tweet = shift;
+		if ($tweet->{retweeted_status}) {
+			return 1;
+		}
+		return ();
+	},
 	# RT
 	sub {
 		my $self = shift;

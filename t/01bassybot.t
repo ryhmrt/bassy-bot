@@ -101,4 +101,19 @@ binmode STDOUT, ':encoding(utf8)';
 
 	is($bot->util->{TWEET}, undef);
 	is($bot->util->{REFID}, undef);
+
+	$bot->reaction({
+		'id' => 6789,
+		'retweeted_status' => {},
+		'status' => 'msg',
+		'created_at' => '2009/9/12 18:02:00',
+		'text' => 'junko',
+		'user' => {
+			'screen_name' => 'foo',
+			'id' => '1',
+		}
+	});
+
+	is($bot->util->{TWEET}, undef);
+	is($bot->util->{REFID}, undef);
 }
