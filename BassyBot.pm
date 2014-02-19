@@ -26,6 +26,10 @@ sub new {
 		my $self = shift;
 		$self->tweet("一人で焼肉食いにいってくる。18000円だけどな！");
 	});
+	$self->timer->add_target("21:00", sub {
+		my $self = shift;
+		$self->tweet("「ででーん」は大事につかえ！");
+	});
 
 	$self->logger->info("bassy-bot initialized.");
 
